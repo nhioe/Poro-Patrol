@@ -1,0 +1,73 @@
+diff --git a/node_modules/@electron-forge/plugin-webpack/dist/Config.d.ts b/node_modules/@electron-forge/plugin-webpack/dist/Config.d.ts
+index ccd8a77..25a974c 100644
+--- a/node_modules/@electron-forge/plugin-webpack/dist/Config.d.ts
++++ b/node_modules/@electron-forge/plugin-webpack/dist/Config.d.ts
+@@ -1,6 +1,6 @@
+ import { Configuration as RawWebpackConfiguration } from 'webpack';
+ import WebpackDevServer from 'webpack-dev-server';
+-import { ConfigurationFactory as WebpackConfigurationFactory } from './WebpackConfig';
++import { ConfigurationFactory as WebpackConfigurationFactory } from '@electron-forge/plugin-webpack/src/WebpackConfig';
+ export interface WebpackPluginEntryPointBase {
+     /**
+      * Human friendly name of your entry point
+diff --git a/node_modules/@electron-forge/plugin-webpack/dist/WebpackConfig.d.ts b/node_modules/@electron-forge/plugin-webpack/dist/WebpackConfig.d.ts
+index 781212a..b7b2eac 100644
+--- a/node_modules/@electron-forge/plugin-webpack/dist/WebpackConfig.d.ts
++++ b/node_modules/@electron-forge/plugin-webpack/dist/WebpackConfig.d.ts
+@@ -1,5 +1,5 @@
+ import webpack, { Configuration } from 'webpack';
+-import { WebpackPluginConfig, WebpackPluginEntryPoint, WebpackPluginEntryPointPreloadOnly, WebpackPluginRendererConfig } from './Config';
++import { WebpackPluginConfig, WebpackPluginEntryPoint, WebpackPluginEntryPointPreloadOnly, WebpackPluginRendererConfig } from '@electron-forge/plugin-webpack/src/Config';
+ type WebpackMode = 'production' | 'development';
+ export type ConfigurationFactory = (env: string | Record<string, string | boolean | number> | unknown, args: Record<string, unknown>) => Configuration | Promise<Configuration>;
+ declare enum RendererTarget {
+diff --git a/node_modules/@electron-forge/plugin-webpack/dist/WebpackPlugin.d.ts b/node_modules/@electron-forge/plugin-webpack/dist/WebpackPlugin.d.ts
+index b9e5321..77d9be7 100644
+--- a/node_modules/@electron-forge/plugin-webpack/dist/WebpackPlugin.d.ts
++++ b/node_modules/@electron-forge/plugin-webpack/dist/WebpackPlugin.d.ts
+@@ -3,8 +3,8 @@ import { ForgeMultiHookMap, ResolvedForgeConfig } from '@electron-forge/shared-t
+ import Logger from '@electron-forge/web-multi-logger';
+ import webpack from 'webpack';
+ import WebpackDevServer from 'webpack-dev-server';
+-import { WebpackPluginConfig } from './Config';
+-import WebpackConfigGenerator from './WebpackConfig';
++import { WebpackPluginConfig } from '@electron-forge/plugin-webpack/src/Config';
++import WebpackConfigGenerator from '@electron-forge/plugin-webpack/src/WebpackConfig';
+ type WebpackToJsonOptions = Parameters<webpack.Stats['toJson']>[0];
+ export default class WebpackPlugin extends PluginBase<WebpackPluginConfig> {
+     name: string;
+diff --git a/node_modules/@electron-forge/plugin-webpack/src/WebpackConfig.ts b/node_modules/@electron-forge/plugin-webpack/src/WebpackConfig.ts
+index c6e0e62..8c7a785 100644
+--- a/node_modules/@electron-forge/plugin-webpack/src/WebpackConfig.ts
++++ b/node_modules/@electron-forge/plugin-webpack/src/WebpackConfig.ts
+@@ -79,17 +79,21 @@ export default class WebpackConfigGenerator {
+   async resolveConfig(config: Configuration | ConfigurationFactory | string): Promise<Configuration> {
+     type MaybeESM<T> = T | { default: T };
+   
+-    let rawConfig =
+-      typeof config === 'string'
+-        ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+-          (require(path.resolve(this.projectDir, config)) as MaybeESM<Configuration | ConfigurationFactory>)
+-        : config;
+-
+-    if (rawConfig && typeof rawConfig === 'object' && 'default' in rawConfig) {
+-      rawConfig = rawConfig.default;
++    let rawConfig: MaybeESM<Configuration | ConfigurationFactory>;
++  
++    if (typeof config === 'string') {
++      // eslint-disable-next-line @typescript-eslint/no-require-imports
++      rawConfig = require(path.resolve(this.projectDir, config)) as MaybeESM<Configuration | ConfigurationFactory>;
++    } else {
++      rawConfig = config;
+     }
+   
+-    return processConfig(this.preprocessConfig, rawConfig);
++    const resolvedConfig =
++      rawConfig && typeof rawConfig === 'object' && 'default' in rawConfig
++        ? (rawConfig.default as Configuration | ConfigurationFactory) // Explicit cast
++        : (rawConfig as Configuration | ConfigurationFactory); // Explicit cast
++  
++    return processConfig(this.preprocessConfig, resolvedConfig);
+   }
+   
+   // Users can override this method in a subclass to provide custom logic or
