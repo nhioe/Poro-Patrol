@@ -2,12 +2,8 @@
 
 Poro Patrol is an Electron app that helps you track when your League of Legends friends are online, so you never miss an opportunity to join them in-game. Stay connected with your friends and get notified when they are ready to play!
 
-## Features
-
-- **Track Online Friends**: Monitor when your League of Legends friends are online.
 - **Notifications**: Get real-time desktop notifications when friends come online.
-- **Watchlist**: Customize which friends you want to track.
-- **Lightweight**: Runs quietly in the background while you game.
+- **Watchlist**: Customize which friends you want to track at a single time.
 
 ## Installation
 
